@@ -1,14 +1,23 @@
 mod cli;
-mod task;
-use std::path::PathBuf;
-
-use crate::task::Task;
+mod tasks;
 use structopt::StructOpt;
 
+use tasks::Task;
+
+use cli::{Action::*, CommandLineArgs};
+
 fn main() {
-    let task = Task::new("task");
+    let CommandLineArgs {
+        action,
+        journal_file,
+    } = CommandLineArgs::from_args();
 
-    Task.add_task(PathBuf::new(), task);
+    let journal_file = journal_file.expect("Failed to find journal file");
 
-    println!("{:#?}", cli::CommandLineArgs::from_args());
+    match action {
+        Add { task } => tasks::add_task(journal_file, Task::new(&task)),
+        List => tasks::list_tasks(journal_file),
+        Done { position } => tasks::complete_task(journal_file, position),
+    }
+    .expect("Failed to perform action")
 }
